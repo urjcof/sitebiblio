@@ -1,0 +1,149 @@
+
+/* Base CSS (tailwind removed) */
+:root{
+	--bg:#0b0b0d;
+	--panel:#0f1113;
+	--muted:#9ca3af;
+	--accent:#ffd166; /* notes des livres */
+	--accent-strong:#ffb84d; /* flèches encore */
+	--card:#121214;
+	--glass: rgba(255,255,255,0.04);
+}
+
+html,body,#root{height:100%;}
+body{
+	margin:0;
+	font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+	background:var(--bg);
+	--brand: #00B894;
+	--brand-strong: #00A67A;
+	-moz-osx-font-smoothing:grayscale;
+}
+
+.text-yellow-400{color:var(--brand)}
+/* layout d'affichage */
+.min-h-screen{min-height:100vh}
+.carousel-arrow svg{color:var(--brand-strong);width:20px;height:20px}
+.p-6{padding:1.5rem}
+.bg-\[#111217\]{background:var(--bg)}
+.btn-primary{background:linear-gradient(180deg,var(--brand),var(--brand-strong));color:#071013;padding:.3rem .6rem;border-radius:6px;font-weight:600}
+.text-gray-100{color:#eef2f7}
+
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.logo-bloxd{font-weight:800;letter-spacing:0.04em;padding:.5rem 1rem;border:1px solid rgba(148,163,184,.08);background:linear-gradient(#0c0c0d,#0a0a0b);border-radius:6px}
+
+/* nav/menu emphasis */
+.hidden.md\:flex{gap:0.5rem}
+.hidden.md\:flex button{color:#dbe7ff;padding:.45rem .9rem;border-radius:8px;background:transparent;border:1px solid transparent}
+.hidden.md\:flex button{color:#dbe7ff;padding:.45rem .9rem;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);}
+.hidden.md\:flex button:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.16);color:#fff}
+
+/* generic outlined button used in header/nav */
+.btn-outline{background:transparent;border:1px solid rgba(255,255,255,0.08);color:#e6eef8;padding:.45rem .9rem;border-radius:8px;transition:background .15s ease,border-color .15s ease,transform .08s ease}
+.btn-outline:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.18);transform:translateY(-1px)}
+.btn-outline:active{transform:translateY(0)}
+.btn-outline:focus{outline:none;box-shadow:0 0 0 4px rgba(0,184,148,0.10)}
+
+/* flèches de navigation du carou*/
+.carousel-arrow{
+	width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid rgba(255,255,255,0.06);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.25));
+	box-shadow:0 4px 18px rgba(2,6,23,0.6);
+}
+.carousel-arrow svg{color:var(--accent-strong);width:20px;height:20px}
+.carousel-arrow:disabled{opacity:.35;cursor:not-allowed}
+
+/* carousel affichage */
+.no-scrollbar{scrollbar-width:none}
+.no-scrollbar::-webkit-scrollbar{display:none}
+.flex{display:flex}
+.items-center{align-items:center}
+.gap-6{gap:1.5rem}
+.overflow-x-auto{overflow-x:auto}
+.px-12{padding-left:3rem;padding-right:3rem}
+.py-6{padding-top:1.5rem;padding-bottom:1.5rem}
+
+/* BookCard affichage*/
+.w-44{width:11rem}
+.rounded-lg{border-radius:0.5rem}
+.shadow-lg{box-shadow:0 8px 24px rgba(2,6,23,0.6)}
+.group:hover img{transform:scale(1.05)}
+.group img{transition:transform .25s}
+.bg-gradient-to-t{background:linear-gradient(to top, rgba(0,0,0,.9), rgba(0,0,0,.35) 40%, transparent)}
+.text-yellow-400{color:var(--accent)}
+.text-gray-300{color:var(--muted)}
+.truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* boutons */
+button{cursor:pointer}
+.rounded{border-radius:6px}
+.bg-green-600{background:#16a34a;color:white}
+.bg-white\/10{background:rgba(255,255,255,.08);color:#fff}
+.btn-primary{background:linear-gradient(180deg,var(--accent),var(--accent-strong));color:#111;padding:.3rem .6rem;border-radius:6px;font-weight:600}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:#e6eef8;padding:.25rem .5rem;border-radius:6px}
+
+/* Tailwind replacement: common background utility used by inputs/cards */
+.bg-gray-800{background:#1f2937}
+
+/* bouton coeur*/
+.heart-icon{transition:transform .15s ease, opacity .15s ease}
+.heart-icon.filled{color:var(--brand);opacity:0.95}
+.heart-icon.outline{stroke:rgba(255,255,255,0.45);opacity:0.9}
+.heart-icon:hover{transform:scale(1.08)}
+.heart-btn{background:transparent;border:0;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.heart-btn:focus{outline:2px solid rgba(0,0,0,0.2);outline-offset:2px}
+.heart-btn .heart-icon{display:block}
+
+/* barre de recherche */
+.search-input{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);color:#e6eef8;padding:.5rem .75rem;border-radius:8px;transition:box-shadow .15s ease,border-color .15s ease}
+.search-input::placeholder{color:rgba(255,255,255,0.36)}
+.search-input:focus{outline:none;box-shadow:0 0 0 5px rgba(0,184,148,0.09);border-color:rgba(0,184,148,0.22)}
+
+
+@media (max-width:640px){
+	.px-12{padding-left:1rem;padding-right:1rem}
+	.w-44{width:10rem}
+}
+
+.hidden{display:none}
+.md\:flex{display:flex}
+.text-sm{font-size:.875rem}
+
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+
+/* Inputs: ensure readable foreground on dark backgrounds */
+input, textarea, select {
+	background: var(--panel);
+	color: #e6eef8;
+	border: 1px solid rgba(255,255,255,0.06);
+	padding: .5rem .75rem;
+	border-radius: 6px;
+}
+input::placeholder, textarea::placeholder { color: rgba(230,238,248,0.45); }
+
+body { background-color: #0b0b0d; }
+
+/* Utilities added to replace Tailwind usage in components */
+.relative{position:relative}
+.mb-8{margin-bottom:2rem}
+.mb-4{margin-bottom:1rem}
+.space-y-4 > * + *{margin-top:1rem}
+.justify-center{justify-content:center}
+.w-full{width:100%}
+.flex-shrink-0{flex-shrink:0}
+.grid{display:grid}
+.grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.gap-4{gap:1rem}
+.px-6{padding-left:1.5rem;padding-right:1.5rem}
+.text-2xl{font-size:1.5rem;line-height:1.25}
+.font-semibold{font-weight:600}
+.text-white{color:#ffffff}
+
+/* ensure carousel arrows are clickable and on top */
+.carousel-arrow{z-index:1000}
+
+/* small helpers */
+.w-4{width:1rem}
+.text-sm{font-size:.875rem}
