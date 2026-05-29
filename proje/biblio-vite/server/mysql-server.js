@@ -44,9 +44,10 @@ async function main() {
   app.get('/api/books', async (req, res) => {
     try {
       // inclure 'category' et 'category_id' pour que le frontend puisse construire les carrousels
-      const q = `SELECT b.id, b.title, b.year, b.rating, b.cover, b.category_id, c.name AS category
-                 FROM books b LEFT JOIN categories c ON b.category_id = c.id
-                 ORDER BY b.title`;
+            const q = `SELECT b.id, b.title, b.year, b.rating, b.cover, b.category_id, c.name AS category, b.lecture AS lecture_link
+              FROM books b
+              LEFT JOIN categories c ON b.category_id = c.id
+              ORDER BY b.title`;
       const [rows] = await pool.query(q);
       // mapper les lignes directement
       res.json(rows.map(r => ({
@@ -55,6 +56,7 @@ async function main() {
         year: r.year,
         rating: r.rating,
         cover: r.cover,
+        link: r.lecture_link || null,
         category: r.category || null,
         category_id: r.category_id || null
       })));
@@ -66,15 +68,27 @@ async function main() {
 
   app.get('/api/books/:id', async (req, res) => {
     try {
-      const q = `SELECT b.id, b.title, b.year, b.rating, b.cover, b.category_id, c.name AS category
-                 FROM books b LEFT JOIN categories c ON b.category_id = c.id
-                 WHERE b.id = ?`;
+      const q = `SELECT b.id, b.title, b.year, b.rating, b.cover, b.category_id, c.name AS category, b.lecture AS lecture_link
+             FROM books b LEFT JOIN categories c ON b.category_id = c.id
+             WHERE b.id = ?`;
       const [rows] = await pool.query(q, [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Not found' });
       const r = rows[0];
-      res.json({ id: r.id, title: r.title, year: r.year, rating: r.rating, cover: r.cover, category: r.category || null, category_id: r.category_id || null });
+      res.json({ id: r.id, title: r.title, year: r.year, rating: r.rating, cover: r.cover, link: r.lecture_link || null, category: r.category || null, category_id: r.category_id || null });
     } catch (err) {
       console.error(err);
+      res.status(500).json({ error: 'DB error' });
+    }
+  });
+
+  // endpoint pour récupérer le lien de lecture pour un livre
+  app.get('/api/lecture/:bookId', async (req, res) => {
+    try {
+      const [rows] = await pool.query('SELECT lecture FROM books WHERE id = ? LIMIT 1', [req.params.bookId]);
+      if (rows && rows.length && rows[0].lecture) return res.json({ link: rows[0].lecture });
+      return res.status(404).json({ error: 'not found' });
+    } catch (err) {
+      console.error('lecture lookup error', err);
       res.status(500).json({ error: 'DB error' });
     }
   });

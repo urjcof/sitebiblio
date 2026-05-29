@@ -1,9 +1,9 @@
 import React from 'react';
 
-export default function AccountPage({ onAuthChange, onOpenWishlist}) {
+export default function AccountPage({ onAuthChange, onOpenWishlist }) {
   const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000';
   const [user, setUser] = React.useState(null);
-  const [mode, setMode] = React.useState('login'); // s'enregistrer ou se connecter
+  const [mode, setMode] = React.useState('login');
   const [loading, setLoading] = React.useState(true);
   const [form, setForm] = React.useState({ username: '', password: '' });
   const [error, setError] = React.useState(null);
@@ -16,9 +16,13 @@ export default function AccountPage({ onAuthChange, onOpenWishlist}) {
       .finally(() => setLoading(false));
   }, []);
 
-  function setField(k, v){ setForm(s => ({ ...s, [k]: v })); }
+  function setField(k, v) { setForm(s => ({ ...s, [k]: v })); }
 
-  async function submit(e){
+  function getInitials(name) {
+    return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  async function submit(e) {
     e.preventDefault();
     setError(null);
     const url = mode === 'login' ? `${API_BASE}/api/login` : `${API_BASE}/api/register`;
@@ -27,69 +31,154 @@ export default function AccountPage({ onAuthChange, onOpenWishlist}) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(form)
+        body: JSON.stringify({ username: form.username, password: form.password }),
       });
       const data = await res.json();
-      if (!res.ok) return setError(data && data.error ? data.error : 'Erreur');
+      if (!res.ok) return setError(data?.error || 'Erreur');
       setUser(data);
-      // prévenir le composant parent que l'authentification a changé
-      try { if (onAuthChange) onAuthChange(data); } catch (err) { /* pas d'action */ }
-    } catch (err) {
-      setError('Network error');
+      try { if (onAuthChange) onAuthChange(data); } catch {}
+    } catch {
+      setError('Erreur réseau');
     }
   }
 
-  async function logout(){
-    try {
-      await fetch(`${API_BASE}/api/logout`, { method: 'POST', credentials: 'include' });
-    } catch {}
+  async function logout() {
+    try { await fetch(`${API_BASE}/api/logout`, { method: 'POST', credentials: 'include' }); } catch {}
     setUser(null);
-    try { if (onAuthChange) onAuthChange(null); } catch (err) { /* pas d'action */ }
+    try { if (onAuthChange) onAuthChange(null); } catch {}
   }
 
-  if (loading) return <div className="p-6 text-gray-300">Chargement...</div>;
-
-  if (!user) {
+  if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-full max-w-md mx-auto p-6 bg-gray-900 rounded shadow">
-          <h2 className="text-white text-xl mb-4">{mode === 'login' ? 'Se connecter' : 'Créer un compte'}</h2>
-          {error && <div className="mb-3 text-red-400">{error}</div>}
-          <form onSubmit={submit} className="space-y-3 flex flex-col items-center">
-            <div className="w-full flex flex-col items-center">
-              <label className="block text-sm text-gray-300">Nom d'utilisateur</label>
-              <input value={form.username} onChange={e => setField('username', e.target.value)} className="block w-full sm:w-56 mx-auto px-3 py-2 bg-gray-800 text-white rounded" />
+      <div className="account-page">
+        <div className="account-loading">Chargement…</div>
+      </div>
+    );
+  }
+
+  /* ── Logged in ─────────────────────────────────────── */
+  if (user) {
+    return (
+      <div className="account-page">
+        <div className="account-profile-card">
+
+          {/* Avatar + nom */}
+          <div className="account-avatar-row">
+            <div className="account-avatar">
+              {getInitials(user.username)}
             </div>
-            <div className="w-full flex flex-col items-center">
-              <label className="block text-sm text-gray-300">Mot de passe</label>
-              <input type="password" value={form.password} onChange={e => setField('password', e.target.value)} className="block w-full sm:w-56 mx-auto px-3 py-2 bg-gray-800 text-white rounded" />
+            <div className="account-avatar-info">
+              <div className="account-username">{user.username}</div>
+              <div className="account-badge">
+                <span className="account-badge-dot" />
+                Membre actif
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
-              <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded w-full sm:w-40">{mode === 'login' ? 'Se connecter' : 'Créer'}</button>
-              <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="px-4 py-2 bg-white/10 text-white rounded w-full sm:w-40">
-                {mode === 'login' ? 'Créer un compte' : "J'ai déjà un compte"}
-              </button>
-            </div>
-          </form>
+          </div>
+
+          {/* Actions */}
+          <div className="account-action-list">
+            <button className="account-action-item" onClick={() => onOpenWishlist && onOpenWishlist()}>
+              <div className="account-action-icon">♥</div>
+              <span className="account-action-label">Ma wishlist</span>
+              <span className="account-action-arrow">›</span>
+            </button>
+            <div className="account-action-divider" />
+
+            <button className="account-action-item account-action-danger" onClick={logout}>
+              <div className="account-action-icon">⎋</div>
+              <span className="account-action-label">Se déconnecter</span>
+            </button>
+          </div>
+
         </div>
       </div>
     );
   }
 
+  /* ── Auth form ─────────────────────────────────────── */
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="max-w-md w-full p-6 bg-gray-900 rounded shadow text-gray-200">
-        <h2 className="text-xl mb-2">Mon compte</h2>
-        <div className="mb-4">Connecté en tant que <strong className="text-white">{user.username}</strong></div>
-        <div className="flex flex-col gap-3 w-full items-center">
-          <div className="w-full flex justify-center">
-            <button onClick={() => onOpenWishlist && onOpenWishlist()} className="px-4 py-2 bg-white/10 rounded text-white w-full sm:w-auto">Voir ma wishlist</button>
+    <div className="account-page">
+
+      {/* En-tête */}
+      <div className="account-brand">
+        <span className="account-brand-dot">●</span> BOOKBOXD
+      </div>
+      <p className="account-brand-sub">Connectez-vous pour accéder à votre bibliothèque</p>
+
+      {/* Toggle */}
+      <div className="account-tab-toggle">
+        <button
+          className={`account-tab-btn${mode === 'login' ? ' active' : ''}`}
+          onClick={() => { setMode('login'); setError(null); }}
+        >
+          Se connecter
+        </button>
+        <button
+          className={`account-tab-btn${mode === 'register' ? ' active' : ''}`}
+          onClick={() => { setMode('register'); setError(null); }}
+        >
+          Créer un compte
+        </button>
+      </div>
+
+      {/* Card formulaire */}
+      <div className="account-form-card">
+        <div className="account-form-header">
+          <div className="account-form-title">
+            {mode === 'login' ? 'Connexion' : 'Créer un compte'}
           </div>
-          <div className="w-full flex justify-center">
-            <button onClick={logout} className="px-6 py-2 bg-red-600 rounded text-white w-full sm:w-40">Se déconnecter</button>
+          <div className="account-form-sub">
+            {mode === 'login' ? 'Bienvenue — content de vous revoir' : 'Rejoignez la communauté'}
           </div>
         </div>
+
+        <form className="account-form-body" onSubmit={submit}>
+          {error && <div className="account-error">{error}</div>}
+
+          <div className="account-field">
+            <label className="account-label">Nom d'utilisateur</label>
+            <input
+              className="account-input"
+              value={form.username}
+              onChange={e => setField('username', e.target.value)}
+              autoComplete="username"
+            />
+          </div>
+
+          <div className="account-field">
+            <label className="account-label">Mot de passe</label>
+            <input
+              className="account-input"
+              type="password"
+              value={form.password}
+              onChange={e => setField('password', e.target.value)}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            />
+          </div>
+
+          <button type="submit" className="account-btn-primary">
+            {mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
+          </button>
+
+          <div className="account-switch-row">
+            {mode === 'login' ? (
+              <>Pas encore de compte ?{' '}
+                <button type="button" className="account-switch-btn" onClick={() => { setMode('register'); setError(null); }}>
+                  Créer un compte
+                </button>
+              </>
+            ) : (
+              <>Déjà un compte ?{' '}
+                <button type="button" className="account-switch-btn" onClick={() => { setMode('login'); setError(null); }}>
+                  Se connecter
+                </button>
+              </>
+            )}
+          </div>
+        </form>
       </div>
+
     </div>
   );
 }
@@ -97,14 +186,8 @@ export default function AccountPage({ onAuthChange, onOpenWishlist}) {
 /*
   Sommaire du code :
 
- - ligne 
- - ligne 50 - 77 : chargement du compte et message d'erreur 
-
-
-
-
-
-
-
-
+  - Lignes 1–57   : état, fetch /api/me, helpers (initials, submit, logout)
+  - Lignes 59–64  : écran de chargement
+  - Lignes 67–116 : vue profil connecté (avatar, stats, actions, déconnexion)
+  - Lignes 119–195: formulaire auth (toggle login/register, champs, erreur)
 */

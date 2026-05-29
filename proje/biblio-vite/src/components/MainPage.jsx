@@ -159,9 +159,33 @@ export default function MainPage() {
       })
     : books;
 
-  function onRead(book) {
-    
-    alert(`Ouvrir lecteur: ${book.title}`);
+  async function onRead(book) {
+    // prefer `link` field; if absent, try API `/api/lecture/:id` which returns { link }
+    let link = book?.link || book?.file || book?.url;
+    if (!link) {
+      try {
+        const res = await fetch(`${API_BASE}/api/lecture/${book.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          link = data && data.link;
+        }
+      } catch (err) {
+      }
+    }
+    if (!link) {
+      alert(`Aucun fichier disponible pour "${book.title}"`);
+      return;
+    }
+    let url = link;
+    if (!/^https?:\/\//i.test(url)) {
+      if (!url.startsWith('/')) url = '/' + url;
+      url = API_BASE.replace(/\/+$/, '') + url;
+    }
+    try {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      window.open(url, '_blank');
+    }
   }
 
   function onBorrow(copyId, book) {
@@ -202,7 +226,7 @@ export default function MainPage() {
           </div>
           <AccountPage 
             onAuthChange={(u) => { setUser(u); handleAuthChange(u); }}
-            onAuthChange={handleAuthChange} onOpenWishlist={() => { setWishlistOpen(true); setAccountOpen(false); }} 
+            onOpenWishlist={() => { setWishlistOpen(true); setAccountOpen(false); }} 
           />
         </section>
       ) : wishlistOpen ? (

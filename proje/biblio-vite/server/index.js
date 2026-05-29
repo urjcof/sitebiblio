@@ -7,6 +7,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Servir les fichiers statiques (public/) pour les livres et assets
+const publicDir = path.join(__dirname, '..', 'public');
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+} else {
+  // fallback: tenter un dossier `public` local au server
+  const localPub = path.join(__dirname, 'public');
+  if (fs.existsSync(localPub)) app.use(express.static(localPub));
+}
+
 const DB_FILE = path.join(__dirname, 'db.json');
 
 function readDB(){
@@ -64,8 +74,9 @@ async function tryConnectMySQL() {
 // Aide : récupérer les livres depuis MySQL ou depuis db.json
 async function fetchBooksFromDB() {
   if (useMySQL && mysqlPool) {
-    const q = `SELECT b.id,b.title,b.year,b.rating,b.cover,b.category,b.category_id, c.name AS category_name
-               FROM books b LEFT JOIN categories c ON b.category_id = c.id`;
+    const q = `SELECT b.id,b.title,b.year,b.rating,b.cover,b.category,b.category_id, c.name AS category_name, b.lecture AS lecture_link
+           FROM books b
+           LEFT JOIN categories c ON b.category_id = c.id`;
     const [rows] = await mysqlPool.query(q);
     // récupérer les copies pour tous les ids retournés
     const ids = rows.map(r => r.id);
@@ -80,13 +91,24 @@ async function fetchBooksFromDB() {
       year: r.year,
       rating: r.rating,
       cover: r.cover,
+      link: r.lecture_link || null,
       category: r.category_name || r.category || null,
       category_id: r.category_id || null,
       copies: copies.filter(c => c.book_id === r.id).map(c => ({ id: c.id, status: c.status }))
     }));
   }
   const db = readDB();
-  return db.books || [];
+  const books = db.books || [];
+  const lectures = db.lectures || [];
+  // si des entrées `lectures` existent, fusionner le champ `link` dans les livres
+  if (lectures && lectures.length) {
+    const map = {};
+    for (const l of lectures) {
+      map[String(l.book_id)] = l.link || l.path || l.url || null;
+    }
+    return books.map(b => ({ ...b, link: map[String(b.id)] || b.link || null }));
+  }
+  return books;
 }
 
 async function fetchCategoriesFromDB() {
@@ -212,6 +234,26 @@ app.get('/api/favorites', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'server error' }); }
 });
 
+// Fournir le lien de lecture (table `lecture` en MySQL ou `lectures` dans db.json)
+app.get('/api/lecture/:bookId', async (req, res) => {
+  try {
+    const bookId = req.params.bookId;
+    if (useMySQL && mysqlPool) {
+      const [rows] = await mysqlPool.query('SELECT lecture FROM books WHERE id = ? LIMIT 1', [bookId]);
+      if (rows && rows[0] && rows[0].lecture) return res.json({ link: rows[0].lecture });
+      return res.status(404).json({ error: 'not found' });
+    }
+    const db = readDB();
+    const lectures = db.lectures || [];
+    const entry = lectures.find(l => String(l.book_id) === String(bookId));
+    if (entry && entry.link) return res.json({ link: entry.link });
+    return res.status(404).json({ error: 'not found' });
+  } catch (err) {
+    console.error('lecture endpoint error', err && err.message);
+    res.status(500).json({ error: 'server error' });
+  }
+});
+
 app.post('/api/favorites', async (req, res) => {
   try {
     // supporte à la fois { book_id, action: 'add'|'remove' } et { id, value: true|false }
@@ -252,4 +294,18 @@ tryConnectMySQL().then(() => {
 }).catch(e => {
   console.error('Failed to initialize MySQL probe', e && e.message);
   app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
+});
+
+// endpoint de debug pour vérifier le dossier public et la présence d'un fichier
+app.get('/__static-debug', (req, res) => {
+  try {
+    const info = {};
+    info.publicDir = publicDir || null;
+    const samplePath = path.join(publicDir || path.join(__dirname, 'public'), 'book', 'st_exupery_le_petit_prince.pdf');
+    info.sampleExists = fs.existsSync(samplePath);
+    info.samplePath = samplePath;
+    res.json(info);
+  } catch (err) {
+    res.status(500).json({ error: 'debug error', message: String(err && err.message) });
+  }
 });
