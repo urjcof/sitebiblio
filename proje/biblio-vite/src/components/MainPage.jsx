@@ -5,7 +5,7 @@ const LazyWishlist = React.lazy(() => import('./WishlistPage'));
 
 
 export default function MainPage() {
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000';
+  const API_BASE = import.meta.env.VITE_API_BASE ?? '';
   const [books, setBooks] = useState([]);
   const [trending, setTrending] = useState([]);
   const [categories, setCategories] = useState([]);
